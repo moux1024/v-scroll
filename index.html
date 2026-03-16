@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>v-scroll Web Components Demo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .demo-container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 2.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        margin-bottom: 2rem;
+      }
+
+      .card h2 {
+        color: #333;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+      }
+
+      .card p {
+        color: #666;
+        line-height: 1.8;
+        margin-bottom: 1rem;
+      }
+
+      v-scroll {
+        height: 400px;
+        width: 100%;
+        background: #f8f9fa;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo-container">
+      <h1>\ud83c\udf00 v-scroll Web Components</h1>
+
+      <div class="card">
+        <h2>Introduction</h2>
+        <p>
+          Welcome to the v-scroll demonstration page. This custom Web Component provides
+          a smooth, customizable scrolling experience with a modern design aesthetic.
+        </p>
+        <p>
+          The component features a pure CSS-based scrollbar that stays hidden during
+          normal browsing but appears when you hover over it, giving your interface
+          a clean and unobtrusive look.
+        </p>
+      </div>
+
+      <v-scroll>
+        <div class="card">
+          <h2>Section 1: Overview</h2>
+          <p>
+            This section demonstrates the v-scroll component in action. As you scroll through
+            the content, notice how the custom scrollbar adapts to the available space.
+          </p>
+          <p>
+            The component uses Shadow DOM for style isolation, ensuring that your custom
+            scrollbar styles don't interfere with other elements on the page.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Section 2: Features</h2>
+          <p>
+            The v-scroll component includes several key features designed for modern web applications:
+          </p>
+          <ul>
+            <li><strong>Shadow DOM:</strong> Complete style encapsulation</li>
+            <li><strong>Custom Scrollbar:</strong> Beautiful, minimal design</li>
+            <li><strong>Resize Observer:</strong> Automatic updates on content changes</li>
+            <li><strong>Pointer Events:</strong> Smooth drag interaction</li>
+            <li><strong>CSS Variables:</strong> Easy customization</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Section 3: Implementation Details</h2>
+          <p>
+            Built with vanilla JavaScript and Web Components standards, v-scroll requires
+            no external dependencies. It leverages modern browser APIs like ResizeObserver
+            and Pointer Events for optimal performance.
+          </p>
+          <p>
+            The component supports dynamic CSS loading, allowing you to override default
+            styles by simply modifying the imported stylesheet.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Section 4: Customization</h2>
+          <p>
+            Customize the scrollbar appearance using CSS variables:
+          </p>
+          <pre style="background: #f0f0f0; padding: 1rem; border-radius: 4px; overflow-x: auto;">
+:root {
+  --scroll-thumb-bg: #c0c4cc;
+  --scroll-thumb-hover: #909399;
+  --scroll-thumb-active: #64666c;
+  --scroll-size: 8px;
+}
+          </pre>
+        </div>
+
+        <div class="card">
+          <h2>Section 5: Performance</h2>
+          <p>
+            v-scroll is optimized for performance with minimal DOM manipulation and efficient
+            event handling. The use of requestAnimationFrame ensures smooth animations even
+            on lower-powered devices.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Section 6: Accessibility</h2>
+          <p>
+            While providing a custom scrollbar, v-scroll maintains full keyboard navigation
+            support and screen reader compatibility. Users can still scroll using arrow keys,
+            Page Up/Down, and touch gestures.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Section 7: Browser Support</h2>
+          <p>
+            v-scroll works in all modern browsers that support Web Components and ES modules:
+          </p>
+          <ul>
+            <li>Chrome 60+</li>
+            <li>Firefox 60+</li>
+            <li>Safari 11+</li>
+            <li>Edge 16+</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>Section 8: Installation</h2>
+          <p>
+            To get started, add v-scroll to your project:
+          </p>
+          <pre style="background: #f0f0f0; padding: 1rem; border-radius: 4px; overflow-x: auto;">
+npm install vite
+npm run dev
+          </pre>
+        </div>
+
+        <div class="card">
+          <h2>Section 9: Usage Example</h2>
+          <p>
+            Using the component is simple:
+          </p>
+          <pre style="background: #f0f0f0; padding: 1rem; border-radius: 4px; overflow-x: auto;">
+&lt;v-scroll&gt;
+  &lt;!-- Your content here --&gt;
+&lt;/v-scroll&gt;
+          </pre>
+        </div>
+
+        <div class="card">
+          <h2>Section 10: Conclusion</h2>
+          <p>
+            Thank you for exploring v-scroll! This component represents a modern approach to
+            custom scrolling that balances aesthetics with functionality and accessibility.
+          </p>
+        </div>
+      </v-scroll>
+    </div>
+
+    <script type="module" src="/src/v-scroll.js"></script>
+  </body>
+</html>

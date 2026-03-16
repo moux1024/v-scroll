@@ -1,0 +1,60 @@
+:root {
+  --scroll-thumb-bg: #c0c4cc;
+  --scroll-thumb-hover: #909399;
+  --scroll-thumb-active: #64666c;
+  --scroll-track-bg: transparent;
+  --scroll-size: 8px;
+}
+
+v-scroll::part(track) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--scroll-size);
+  height: 100%;
+  background: var(--scroll-track-bg);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+v-scroll::part(bar) {
+  position: absolute;
+  right: 2px;
+  width: calc(var(--scroll-size) - 4px);
+  min-height: 30px;
+  background: var(--scroll-thumb-bg);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+v-scroll::part(bar)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: var(--scroll-thumb-hover);
+  border-radius: 4px;
+  transition: opacity 0.15s ease;
+}
+
+v-scroll:hover::part(bar)::before {
+  opacity: 1;
+}
+
+v-scroll::part(bar)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--scroll-thumb-active);
+  border-radius: 4px;
+  transform: scale(0.95);
+  opacity: 0;
+  transition: opacity 0.1s ease, transform 0.1s ease;
+}
+
+v-scroll:active::part(bar)::after,
+v-scroll.dragging::part(bar)::after {
+  opacity: 1;
+  transform: scale(1);
+}
