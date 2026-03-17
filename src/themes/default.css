@@ -25,6 +25,7 @@ v-scroll::part(bar) {
   background: var(--scroll-thumb-bg);
   border-radius: 4px;
   cursor: pointer;
+  pointer-events: auto;
   transition: background 0.15s ease;
 }
 

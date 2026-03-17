@@ -1,7 +1,6 @@
-import scrollStyles from './themes/default.css?inline';
-
 const SCROLL_BAR_SIZE = 8;
 const BOUNDARY_SPACING = 3;
+const IDLE_HIDE_DELAY = 800;
 
 const getNormalizedScrollTop = (scrollTop, clientHeight, scrollHeight) => {
   const availableSpace = clientHeight - BOUNDARY_SPACING * 2;
@@ -40,8 +39,19 @@ export default class VScroll extends HTMLElement {
 
   disconnectedCallback() {
     this.resizeObserver?.disconnect();
-    this.contentResizeObserver?.disconnect();
     clearTimeout(this.scrollTimeout);
+    clearTimeout(this.hideScrollbarTimeout);
+    if (this.container && this.scrollHandler) {
+      this.container.removeEventListener('scroll', this.scrollHandler);
+    }
+    if (this.container && this.wheelHandler) {
+      this.container.removeEventListener('wheel', this.wheelHandler, { passive: true });
+    }
+    const track = this.shadowRoot?.querySelector('.track');
+    if (track) {
+      track.removeEventListener('mouseenter', this.trackEnterHandler);
+      track.removeEventListener('mouseleave', this.trackLeaveHandler);
+    }
     document.removeEventListener('pointermove', this.pointerMoveHandler, true);
     document.removeEventListener('pointerup', this.pointerUpHandler, true);
   }
@@ -75,6 +85,12 @@ export default class VScroll extends HTMLElement {
           position: relative;
           overflow: hidden;
           height: 100%;
+          --scroll-thumb-bg: #c0c4cc;
+          --scroll-thumb-hover: #909399;
+          --scroll-thumb-active: #64666c;
+          --scroll-track-bg: rgba(0,0,0,0.06);
+          --scroll-size: 8px;
+          --scroll-size-hover: 14px;
         }
         .container {
           position: relative;
@@ -88,7 +104,49 @@ export default class VScroll extends HTMLElement {
           height: 0;
         }
         .track {
-          ${scrollStyles}
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: var(--scroll-size);
+          height: 100%;
+          background: var(--scroll-track-bg);
+          border-radius: 4px;
+          pointer-events: auto;
+          z-index: 1;
+          transition: width 0.2s ease, opacity 0.25s ease;
+          opacity: 1;
+        }
+        .track.idle {
+          opacity: 0;
+        }
+        .track:hover,
+        .track:not(.idle) {
+          opacity: 1;
+        }
+        .track:hover {
+          width: var(--scroll-size-hover);
+        }
+        .track [part="bar"] {
+          position: absolute;
+          right: 2px;
+          width: calc(var(--scroll-size) - 4px);
+          min-height: 30px;
+          background: var(--scroll-thumb-bg);
+          border-radius: 4px;
+          cursor: ns-resize;
+          pointer-events: auto;
+          transition: width 0.2s ease, background 0.15s ease, right 0.2s ease;
+        }
+        .track:hover [part="bar"] {
+          width: calc(var(--scroll-size-hover) - 4px);
+          right: 3px;
+        }
+        .track:hover [part="bar"] {
+          background: var(--scroll-thumb-hover);
+        }
+        :host.dragging .track [part="bar"] {
+          background: var(--scroll-thumb-active);
+          cursor: grabbing;
         }
         ::slotted(*) {
           box-sizing: border-box;
@@ -102,55 +160,94 @@ export default class VScroll extends HTMLElement {
     `;
   }
 
+  showScrollbar() {
+    const track = this.shadowRoot?.querySelector('.track');
+    if (track) track.classList.remove('idle');
+    clearTimeout(this.hideScrollbarTimeout);
+    this.hideScrollbarTimeout = null;
+  }
+
+  scheduleHideScrollbar() {
+    clearTimeout(this.hideScrollbarTimeout);
+    this.hideScrollbarTimeout = setTimeout(() => {
+      const track = this.shadowRoot?.querySelector('.track');
+      if (track) track.classList.add('idle');
+      this.hideScrollbarTimeout = null;
+    }, IDLE_HIDE_DELAY);
+  }
+
   bindEvents() {
     const bar = this.shadowRoot?.querySelector('[part="bar"]');
+    const track = this.shadowRoot?.querySelector('.track');
     if (!bar) return;
+
+    this.trackEnterHandler = () => this.showScrollbar();
+    this.trackLeaveHandler = () => this.scheduleHideScrollbar();
+    track?.addEventListener('mouseenter', this.trackEnterHandler);
+    track?.addEventListener('mouseleave', this.trackLeaveHandler);
 
     const onPointerDown = (e) => {
       e.preventDefault();
+      this.showScrollbar();
       this.classList.add('dragging');
       this.isDragging = true;
-      const trackRect = this.getBoundingClientRect();
       this.dragStartY = e.clientY;
       this.dragStartScroll = this.container.scrollTop;
+      document.body.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+      bar.setPointerCapture?.(e.pointerId);
       document.addEventListener('pointermove', this.pointerMoveHandler, { capture: true });
       document.addEventListener('pointerup', this.pointerUpHandler, { capture: true });
     };
 
     this.pointerMoveHandler = (e) => {
       if (!this.isDragging) return;
+      const { clientHeight, scrollHeight } = this.container;
+      const scrollable = Math.max(0, scrollHeight - clientHeight);
+      if (scrollable <= 0) return;
       const deltaY = e.clientY - this.dragStartY;
-      const newScrollTop = this.dragStartScroll + deltaY;
+      const ratio = scrollable / clientHeight;
+      const scrollDelta = deltaY * ratio;
+      let newScrollTop = this.dragStartScroll + scrollDelta;
+      newScrollTop = Math.max(0, Math.min(scrollable, newScrollTop));
       this.container.scrollTop = newScrollTop;
     };
 
     this.pointerUpHandler = () => {
       this.isDragging = false;
       this.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       document.removeEventListener('pointermove', this.pointerMoveHandler, true);
       document.removeEventListener('pointerup', this.pointerUpHandler, true);
-    };
-
-    bar.setPointerCapture = (e) => {
-      e.target.setPointerCapture(e.pointerId);
+      this.scheduleHideScrollbar();
     };
 
     bar.addEventListener('pointerdown', onPointerDown);
   }
 
   setupObservers() {
-    const content = this.querySelector(':scope > *') || this;
-
-    this.resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        this.contentHeight = entry.contentRect.height;
-        this.adjustScrollbar();
-      }
+    this.resizeObserver = new ResizeObserver(() => {
+      this.adjustScrollbar();
     });
 
-    this.contentResizeObserver = new ResizeObserver(() => this.requestAdjustment());
+    const container = this.container;
+    if (container) {
+      this.resizeObserver.observe(container);
+      this.scrollHandler = () => {
+        this.showScrollbar();
+        this.adjustScrollbar();
+        this.scheduleHideScrollbar();
+      };
+      this.wheelHandler = () => {
+        this.showScrollbar();
+        this.scheduleHideScrollbar();
+      };
+      container.addEventListener('scroll', this.scrollHandler, { passive: true });
+      container.addEventListener('wheel', this.wheelHandler, { passive: true });
+    }
 
-    [this.container].forEach(el => el && this.resizeObserver.observe(el));
+    this.scheduleHideScrollbar();
   }
 
   get container() {
